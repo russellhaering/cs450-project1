@@ -74,9 +74,10 @@ void initGL() {
 // you'll have to change it yourself.
 // rgb is returned in 0-1 scale (ready for color3f)
 void HSVtoRGB(float hsv[3], float rgb[3]) {
+  float f = (hsv[0] / 60.0f - (int) (hsv[0] / 60.0f));
 	float tmp1 = hsv[2] * (1 - hsv[1]);
-	float tmp2 = hsv[2] * (1 - hsv[1] * ((hsv[0] / 60.0f) - (int) (hsv[0] / 60.0f)));
-	float tmp3 = hsv[2] * (1 - hsv[1] * (1 - ((hsv[0] / 60.0f) - (int) (hsv[0] / 60.0f))));
+	float tmp2 = hsv[2] * (1 - hsv[1] * f);
+	float tmp3 = hsv[2] * (1 - hsv[1] * (1 - f));
 	switch((int)(hsv[0] / 60)) {
 		case 0:
 			rgb[0] = hsv[2];
@@ -113,8 +114,6 @@ void HSVtoRGB(float hsv[3], float rgb[3]) {
 	}
 
 }
-
-
 
 int main(int argc, char ** argv) {
   if (argc != 2) {
