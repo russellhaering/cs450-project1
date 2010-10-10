@@ -93,7 +93,10 @@ int main(int argc, char ** argv) {
     return 1;
   }
 
-  load_dataset(argv[1]);
+  set = load_dataset(argv[1]);
+  if (set == NULL) {
+    return 0;
+  }
 
 	// Example showing how HSVtoRGB works
 	float rgb[] = {0, 0, 0};
