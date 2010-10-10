@@ -33,6 +33,7 @@ void display() {
   int i, j;
   float x, y, hsv[3], rgb[3];
   long offset;
+  float bucket_height;
   hsv[1] = hsv[2] = 1.0;
 
   glClear(GL_COLOR_BUFFER_BIT);
@@ -47,7 +48,7 @@ void display() {
         glColor3f(1.0, 1.0, 1.0);
       }
       else {
-        hsv[0] = ((240.0 / 19.0) * (19 - set->data[offset]));
+        hsv[0] = ((240.0 / (BUCKET_COUNT - 1)) * ((BUCKET_COUNT - 1) - set->data[offset]));
         HSVtoRGB(hsv, rgb);
         glColor3f(rgb[0], rgb[1], rgb[2]);
       }
@@ -69,7 +70,19 @@ void display() {
 
 
   // Draw the key background
-
+  glBegin(GL_QUADS);
+  bucket_height = (((float) (VIEW_HEIGHT - (2 * KEY_OUTLINE_WIDTH))) / BUCKET_COUNT);
+  printf("%f\n", bucket_height);
+  for (i = 0; i < BUCKET_COUNT; i++) {
+    hsv[0] = ((240.0 / (BUCKET_COUNT - 1)) * i);
+    HSVtoRGB(hsv, rgb);
+    glColor3f(rgb[0], rgb[1], rgb[2]);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN + KEY_OUTLINE_WIDTH, MARGIN + KEY_OUTLINE_WIDTH + i * bucket_height);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN + KEY_OUTLINE_WIDTH, MARGIN + KEY_OUTLINE_WIDTH + (i + 1) * bucket_height);
+    glVertex2f(WINDOW_WIDTH - MARGIN - KEY_OUTLINE_WIDTH, MARGIN + KEY_OUTLINE_WIDTH + (i + 1) * bucket_height);
+    glVertex2f(WINDOW_WIDTH - MARGIN - KEY_OUTLINE_WIDTH, MARGIN + KEY_OUTLINE_WIDTH + i * bucket_height);
+  }
+  glEnd();
 
   // Draw the key outline
   glColor3f(0.0, 0.0, 0.0);
