@@ -8,8 +8,16 @@
 #include <GL/glut.h>
 #endif
 
-#define HEIGHT 100.0
-#define WIDTH 100.0
+#define VIEW_HEIGHT 480
+#define VIEW_WIDTH  720
+#define MARGIN 7
+#define KEY_WIDTH 200
+
+#define WINDOW_HEIGHT (VIEW_HEIGHT + 2 * MARGIN)
+#define WINDOW_WIDTH (VIEW_WIDTH + 3 * MARGIN + KEY_WIDTH)
+
+#define KEY_OUTLINE_WIDTH 5
+
 
 // Function prototypes
 void display();
@@ -29,6 +37,8 @@ void display() {
 
   glClear(GL_COLOR_BUFFER_BIT);
 
+  // Draw the colored squares
+  glBegin(GL_QUADS);
   for (i = 0; i < set->y_dim; i++) {
     for (j = 0; j < set->x_dim; j++) {
       offset = get_offset(set, i, j);
@@ -43,18 +53,51 @@ void display() {
       }
 
       // Calculate the location of the quad
-      x = (j * grid_width) + 1;
-      y = (i * grid_height) + 1;
+      x = (j * grid_width) + MARGIN;
+      y = (i * grid_height) + MARGIN;
 
       // Draw the quad
-      glBegin(GL_QUADS);
-        glVertex2f(x, y);
-        glVertex2f(x + grid_width, y);
-        glVertex2f(x + grid_width, y + grid_height);
-        glVertex2f(x, y + grid_height);
-      glEnd();
+      glVertex2f(x, y);
+      glVertex2f(x + grid_width, y);
+      glVertex2f(x + grid_width, y + grid_height);
+      glVertex2f(x, y + grid_height);
     }
   }
+  glEnd();
+
+  // Draw the countours
+
+
+  // Draw the key background
+
+
+  // Draw the key outline
+  glColor3f(0.0, 0.0, 0.0);
+  glBegin(GL_QUADS);
+    // Left Side
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN, MARGIN);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN, VIEW_HEIGHT + MARGIN);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN + KEY_OUTLINE_WIDTH, VIEW_HEIGHT + MARGIN);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN + KEY_OUTLINE_WIDTH, MARGIN);
+
+    // Right Side
+    glVertex2f(WINDOW_WIDTH - MARGIN - KEY_OUTLINE_WIDTH, MARGIN);
+    glVertex2f(WINDOW_WIDTH - MARGIN - KEY_OUTLINE_WIDTH, VIEW_HEIGHT + MARGIN);
+    glVertex2f(WINDOW_WIDTH - MARGIN, VIEW_HEIGHT + MARGIN);
+    glVertex2f(WINDOW_WIDTH - MARGIN, MARGIN);
+
+    // Top
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN, MARGIN);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN, MARGIN + KEY_OUTLINE_WIDTH);
+    glVertex2f(WINDOW_WIDTH - MARGIN, MARGIN + KEY_OUTLINE_WIDTH);
+    glVertex2f(WINDOW_WIDTH - MARGIN, MARGIN);
+
+    // Bottom
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN, WINDOW_HEIGHT - MARGIN - KEY_OUTLINE_WIDTH);
+    glVertex2f(VIEW_WIDTH + 2 * MARGIN, WINDOW_HEIGHT - MARGIN);
+    glVertex2f(WINDOW_WIDTH - MARGIN, WINDOW_HEIGHT - MARGIN);
+    glVertex2f(WINDOW_WIDTH - MARGIN, WINDOW_HEIGHT - MARGIN - KEY_OUTLINE_WIDTH);
+  glEnd();
   glFlush();
 }
 
@@ -62,8 +105,9 @@ void initGL() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0, WIDTH, HEIGHT, 0);
+  gluOrtho2D(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
   glMatrixMode(GL_MODELVIEW);
+  glDepthFunc(GL_NEVER);
 }
 
 // the HSV color model will be as follows
@@ -126,12 +170,12 @@ int main(int argc, char ** argv) {
     return 0;
   }
 
-  grid_width = ((WIDTH - 2) / set->x_dim);
-  grid_height = ((HEIGHT - 2) / set->y_dim);
+  grid_width = ((float) VIEW_WIDTH / set->x_dim);
+  grid_height = ((float) VIEW_HEIGHT / set->y_dim);
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-  glutInitWindowSize(500, 500);
+  glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
   glutInitWindowPosition(0, 0);
   glutCreateWindow("CS 450/550 Project 1");
   glutDisplayFunc(display);
