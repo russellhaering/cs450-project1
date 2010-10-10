@@ -8,24 +8,38 @@
 #include <GL/glut.h>
 #endif
 
+#define HEIGHT 100
+#define WIDTH 100
+
 // Function prototypes
 void display();
 void initGL();
 void HSVtoRGB(float [], float []);
 
 // global variables
+DATASET *set;
 
 // Function Bodies
 void display() {
+  int i, j;
+  float x, y;
+  float grid_width = (set->x_dim / (WIDTH - 2));
+  float grid_height = (set->y_dim / (HEIGHT - 2));
 	// Put all your drawing code in here
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(0.0, 0.0, 1.0);
-	glBegin(GL_POLYGON);
-		glVertex2f(0.25, 0.25);
-		glVertex2f(0.25, -0.25);
-		glVertex2f(-0.25, -0.25);
-		glVertex2f(-0.25, 0.25);
-	glEnd();
+  for (i = 0; i < set->y_dim; i++) {
+    for (j = 0; j < set->x_dim; j++) {
+      x = (j * grid_width) + grid_width;
+      y = (i * grid_height) + grid_width;
+      glBegin(GL_QUADS);
+      glVertex2f(x, y);
+      glVertex2f(x + grid_width, y);
+      glVertex2f(x + grid_width, y + grid_width);
+      glVertex2f(x, y + grid_width);
+	    glEnd();
+    }
+  }
 	glFlush();
 }
 
@@ -33,7 +47,7 @@ void initGL() {
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(-0.5, 0.5, -0.5, 0.5);
+	gluOrtho2D(0, WIDTH, HEIGHT, 0);
 	glMatrixMode(GL_MODELVIEW);
 }
 
