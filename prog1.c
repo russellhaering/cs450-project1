@@ -1,7 +1,12 @@
 // Header Files
 #include "dataset.h"
 #include <stdio.h>
+
+#ifdef __APPLE__
 #include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 // Function prototypes
 void display();
@@ -36,7 +41,7 @@ void initGL() {
 // h : [0 - 360]
 // s : [0 - 1]
 // v : [0 - 1]
-// If you want it differently (in a 2 * pi scale, 256 instead of 1, etc, 
+// If you want it differently (in a 2 * pi scale, 256 instead of 1, etc,
 // you'll have to change it yourself.
 // rgb is returned in 0-1 scale (ready for color3f)
 void HSVtoRGB(float hsv[3], float rgb[3]) {
