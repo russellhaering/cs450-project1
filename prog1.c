@@ -18,25 +18,40 @@ void HSVtoRGB(float [], float []);
 
 // global variables
 DATASET *set;
+float grid_width, grid_height;
 
 // Function Bodies
 void display() {
   int i, j;
-  float x, y;
-  float grid_width = ((WIDTH - 2) / set->x_dim);
-  float grid_height = ((HEIGHT - 2) / set->y_dim);
-	// Put all your drawing code in here
+  float x, y, hsv[3], rgb[3];
+  long offset;
+  hsv[1] = hsv[2] = 1.0;
+
 	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0.0, 0.0, 1.0);
+
   for (i = 0; i < set->y_dim; i++) {
     for (j = 0; j < set->x_dim; j++) {
+      offset = get_offset(set, i, j);
+      // Calculate and set the color for this quad
+      if (set->data[offset] == NO_DATA) {
+        glColor3f(1.0, 1.0, 1.0);
+      }
+      else {
+        hsv[0] = ((240.0 / 19.0) * (19 - set->data[offset]));
+        HSVtoRGB(hsv, rgb);
+        glColor3f(rgb[0], rgb[1], rgb[2]);
+      }
+
+      // Calculate the location of the quad
       x = (j * grid_width) + 1;
       y = (i * grid_height) + 1;
+
+      // Draw the quad
       glBegin(GL_QUADS);
-      glVertex2f(x, y);
-      glVertex2f(x + grid_width, y);
-      glVertex2f(x + grid_width, y + grid_height);
-      glVertex2f(x, y + grid_height);
+        glVertex2f(x, y);
+        glVertex2f(x + grid_width, y);
+        glVertex2f(x + grid_width, y + grid_height);
+        glVertex2f(x, y + grid_height);
 	    glEnd();
     }
   }
@@ -59,9 +74,9 @@ void initGL() {
 // you'll have to change it yourself.
 // rgb is returned in 0-1 scale (ready for color3f)
 void HSVtoRGB(float hsv[3], float rgb[3]) {
-	float tmp1 = hsv[2] * (1-hsv[1]);
-	float tmp2 = hsv[2] * (1-hsv[1] * (hsv[0] / 60.0f - (int) (hsv[0]/60.0f) ));
-	float tmp3 = hsv[2] * (1-hsv[1] * (1 - (hsv[0] / 60.0f - (int) (hsv[0]/60.0f) )));
+	float tmp1 = hsv[2] * (1 - hsv[1]);
+	float tmp2 = hsv[2] * (1 - hsv[1] * ((hsv[0] / 60.0f) - (int) (hsv[0] / 60.0f)));
+	float tmp3 = hsv[2] * (1 - hsv[1] * (1 - ((hsv[0] / 60.0f) - (int) (hsv[0] / 60.0f))));
 	switch((int)(hsv[0] / 60)) {
 		case 0:
 			rgb[0] = hsv[2];
@@ -88,13 +103,13 @@ void HSVtoRGB(float hsv[3], float rgb[3]) {
 			rgb[1] = tmp1;
 			rgb[2] = hsv[2];
 			break;
-		case 5:
+    case 5:
 			rgb[0] = hsv[2];
 			rgb[1] = tmp1;
 			rgb[2] = tmp2;
-			break;
+      break;
 		default:
-			printf("What!? Inconceivable!\n");
+			printf("What!? Inconceivable! (%d)\n", (int)(hsv[0] / 60));
 	}
 
 }
@@ -112,11 +127,8 @@ int main(int argc, char ** argv) {
     return 0;
   }
 
-	// Example showing how HSVtoRGB works
-	float rgb[] = {0, 0, 0};
-	float hsv[] = {222, 81/100.0, 84/100.0};
-	HSVtoRGB(hsv,rgb);
-	printf("HSV: %f %f %f to RGB: %f %f %f\n", hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
+  grid_width = ((WIDTH - 2) / set->x_dim);
+  grid_height = ((HEIGHT - 2) / set->y_dim);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);

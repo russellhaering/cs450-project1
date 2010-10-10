@@ -1,4 +1,5 @@
 #include "dataset.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <float.h>
 #include <fcntl.h>
@@ -8,15 +9,19 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+long get_offset(DATASET *set, int row, int col) {
+  return ((set->x_dim * row) + col);
+}
+
 DATASET *load_dataset(char *filename)
 {
   int fd;
-  long i;
+  long i, j;
   off_t fsize;
   struct stat stats;
   DATASET *set;
   float *data, largest, smallest;
-  char *fbuf, *bptr, *eptr;
+  char *fbuf, *bptr;
   
   fd = open(filename, O_RDONLY);
   if (fd < 0) {
@@ -83,22 +88,9 @@ DATASET *load_dataset(char *filename)
   if (set->data == NULL) {
     perror("Error allocating space for binned dataset");
     munmap(fbuf, fsize);
+    free(set);
     free(data);
-    free(set);
     return NULL;
-  }
-
-  set->grid = malloc(set->y_dim * sizeof(int*));
-  if (set->grid == NULL) {
-    perror("Error allocating space for dataset mapping");
-    munmap(fbuf, fsize);
-    free(set->data);
-    free(set);
-    return NULL;
-  }
-
-  for (i = 0; i < set->y_dim; i++) {
-    set->grid[i] = set->data + (i * set->x_dim * sizeof(float));
   }
 
   largest = FLT_MIN;
@@ -114,18 +106,29 @@ DATASET *load_dataset(char *filename)
       return NULL;
     }
 
-    if (data[i] < smallest) {
+    if (data[i] != 0 && data[i] < smallest) {
       smallest = data[i];
     }
-    if (data[i] > largest) {
+    if (data[i] != 0 && data[i] > largest) {
       largest = data[i];
     }
   }
   
   munmap(fbuf, fsize);
 
-  for (i = 0; i < (set->y_dim * set->x_dim); i++) {
-    set->data[i] = (int) (((data[i] - smallest) / (largest - smallest)) * (BUCKET_COUNT - 1) + 0.5);
+  for (i = 0; i < set->y_dim; i++) {
+    for (j = 0; j < set->x_dim; j++) {
+      long offset = get_offset(set, (set->y_dim - i - 1), j);
+      float val = data[(i * set->x_dim) + j];
+      if (val == 0) {
+        set->data[offset] = NO_DATA;
+      }
+      else {
+        set->data[offset] =
+          (int) (((val - smallest) / (largest - smallest)) * (BUCKET_COUNT - 1) + 0.5);
+
+      }
+    }
   }
 
   free(data);
@@ -134,8 +137,6 @@ DATASET *load_dataset(char *filename)
 
 void free_dataset(DATASET *set)
 {
-  int i;
   free(set->data);
-  free(set->grid);
   free(set);
 }
