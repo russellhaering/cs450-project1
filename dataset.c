@@ -49,7 +49,7 @@ DATASET *load_dataset(char *filename)
   bptr = fbuf;
 
   // Consume # and whitespace
-  while (*bptr == '#' || isspace(bptr)) {
+  while (*bptr == '#' || isspace(*bptr)) {
     bptr++;
   }
 
