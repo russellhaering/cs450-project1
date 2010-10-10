@@ -8,8 +8,8 @@
 #include <GL/glut.h>
 #endif
 
-#define HEIGHT 100
-#define WIDTH 100
+#define HEIGHT 100.0
+#define WIDTH 100.0
 
 // Function prototypes
 void display();
@@ -23,20 +23,20 @@ DATASET *set;
 void display() {
   int i, j;
   float x, y;
-  float grid_width = (set->x_dim / (WIDTH - 2));
-  float grid_height = (set->y_dim / (HEIGHT - 2));
+  float grid_width = ((WIDTH - 2) / set->x_dim);
+  float grid_height = ((HEIGHT - 2) / set->y_dim);
 	// Put all your drawing code in here
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(0.0, 0.0, 1.0);
   for (i = 0; i < set->y_dim; i++) {
     for (j = 0; j < set->x_dim; j++) {
-      x = (j * grid_width) + grid_width;
-      y = (i * grid_height) + grid_width;
+      x = (j * grid_width) + 1;
+      y = (i * grid_height) + 1;
       glBegin(GL_QUADS);
       glVertex2f(x, y);
       glVertex2f(x + grid_width, y);
-      glVertex2f(x + grid_width, y + grid_width);
-      glVertex2f(x, y + grid_width);
+      glVertex2f(x + grid_width, y + grid_height);
+      glVertex2f(x, y + grid_height);
 	    glEnd();
     }
   }
