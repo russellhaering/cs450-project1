@@ -29,10 +29,42 @@ DATASET *set;
 float grid_width, grid_height;
 
 // Function Bodies
+void contourBottom(int row, int col) {
+  float x, y;
+  x = (col * grid_width) + MARGIN;
+  y = ((row + 1) * grid_height) + MARGIN;
+  glVertex2f(x - 1.0, y);
+  glVertex2f(x + (grid_width), y);
+}
+
+void contourTop(int row, int col) {
+  float x, y;
+  x = (col * grid_width) + MARGIN;
+  y = (row * grid_height) + MARGIN;
+  glVertex2f(x - 1.0, y);
+  glVertex2f(x + (grid_width), y);
+}
+
+void contourRight(int row, int col) {
+  float x, y;
+  x = ((col + 1) * grid_width) + MARGIN;
+  y = (row * grid_height) + MARGIN;
+  glVertex2f(x, y);
+  glVertex2f(x, y + (grid_height));
+}
+
+void contourLeft(int row, int col) {
+  float x, y;
+  x = (col * grid_width) + MARGIN;
+  y = (row * grid_height) + MARGIN;
+  glVertex2f(x, y);
+  glVertex2f(x, y + (grid_height));
+}
+
 void display() {
   int i, j;
   float x, y, hsv[3], rgb[3];
-  long offset;
+  long offset, offset2;
   float bucket_height;
   hsv[1] = hsv[2] = 1.0;
 
@@ -43,6 +75,7 @@ void display() {
   for (i = 0; i < set->y_dim; i++) {
     for (j = 0; j < set->x_dim; j++) {
       offset = get_offset(set, i, j);
+
       // Calculate and set the color for this quad
       if (set->data[offset] == NO_DATA) {
         glColor3f(1.0, 1.0, 1.0);
@@ -67,12 +100,55 @@ void display() {
   glEnd();
 
   // Draw the countours
+  glBegin(GL_LINES);
+  glColor3f(0, 0, 0);
+  for (i = 0; i < set->y_dim; i++) {
+    for (j = 0; j < set->x_dim; j++) {
+      offset = get_offset(set, i, j);
+
+      // Draw horizontal contours
+      if (i == 0) {
+        if (set->data[offset] != NO_DATA) {
+          contourTop(i, j);
+        }
+      }
+      if (i == (set->y_dim - 1)) {
+        if (set->data[offset] != NO_DATA) {
+          contourBottom(i, j);
+        }
+      }
+      else {
+        offset2 = get_offset(set, i + 1, j);
+        if (set->data[offset] != set->data[offset2]) {
+          contourBottom(i, j);
+        }
+      }
+
+      // Draw vertical contours
+      if (j == 0) {
+        if (set->data[offset] != NO_DATA) {
+          contourLeft(i, j);
+        }
+      }
+      if (j == (set->x_dim - 1)) {
+        if (set->data[offset] != NO_DATA) {
+          contourRight(i, j);
+        }
+      }
+      else {
+        offset2 = get_offset(set, i, j + 1);
+        if (set->data[offset] != set->data[offset2]) {
+          contourRight(i, j);
+        }
+      }
+    }
+  }
+  glEnd();
 
 
   // Draw the key background
   glBegin(GL_QUADS);
   bucket_height = (((float) (VIEW_HEIGHT - (2 * KEY_OUTLINE_WIDTH))) / BUCKET_COUNT);
-  printf("%f\n", bucket_height);
   for (i = 0; i < BUCKET_COUNT; i++) {
     hsv[0] = ((240.0 / (BUCKET_COUNT - 1)) * i);
     HSVtoRGB(hsv, rgb);
