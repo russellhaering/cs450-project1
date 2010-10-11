@@ -23,14 +23,14 @@ long get_offset(DATASET *set, int row, int col)
   return ((set->x_dim * row) + col);
 }
 
-DATASET *load_dataset(char *filename)
+DATASET *load_dataset(char *filename, long buckets)
 {
   int fd;
   long i, j;
   off_t fsize;
   struct stat stats;
   DATASET *set;
-  float *data, largest, smallest;
+  float *data, largest, smallest, range;
   char *fbuf, *bptr;
 
   fd = open(filename, O_RDONLY);
@@ -61,6 +61,7 @@ DATASET *load_dataset(char *filename)
     return NULL;
   }
 
+  set->buckets = buckets;
   bptr = fbuf;
 
   // Consume # and whitespace
@@ -125,6 +126,7 @@ DATASET *load_dataset(char *filename)
   }
 
   munmap(fbuf, fsize);
+  range = (largest - smallest);
 
   for (i = 0; i < set->y_dim; i++) {
     for (j = 0; j < set->x_dim; j++) {
@@ -134,9 +136,7 @@ DATASET *load_dataset(char *filename)
         set->data[offset] = NO_DATA;
       }
       else {
-        set->data[offset] =
-          (int) (((val - smallest) / (largest - smallest)) * (BUCKET_COUNT - 1) + 0.5);
-
+        set->data[offset] = (((val - smallest) / range) * (set->buckets - 1) + 0.5);
       }
     }
   }

@@ -9,6 +9,9 @@
 
 #include "dataset.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -16,15 +19,16 @@
 #include <GL/glut.h>
 #endif
 
-#define VIEW_HEIGHT 480
-#define VIEW_WIDTH  720
-#define MARGIN 7
-#define KEY_WIDTH 200
+#define BUCKET_OPTSTR     "--buckets"
 
-#define WINDOW_HEIGHT (VIEW_HEIGHT + 2 * MARGIN)
-#define WINDOW_WIDTH (VIEW_WIDTH + 3 * MARGIN + KEY_WIDTH)
-
+#define VIEW_HEIGHT       480
+#define VIEW_WIDTH        720
+#define MARGIN            7
+#define KEY_WIDTH         200
 #define KEY_OUTLINE_WIDTH 5
+
+#define WINDOW_HEIGHT     (VIEW_HEIGHT + 2 * MARGIN)
+#define WINDOW_WIDTH      (VIEW_WIDTH + 3 * MARGIN + KEY_WIDTH)
 
 // Function prototypes
 void contourBottom(int row, int col);
@@ -40,7 +44,8 @@ DATASET *set;
 float grid_width, grid_height;
 
 // Function Bodies
-void contourBottom(int row, int col) {
+void contourBottom(int row, int col)
+{
   float x, y;
   x = (col * grid_width) + MARGIN;
   y = ((row + 1) * grid_height) + MARGIN;
@@ -48,7 +53,8 @@ void contourBottom(int row, int col) {
   glVertex2f(x + (grid_width), y);
 }
 
-void contourTop(int row, int col) {
+void contourTop(int row, int col)
+{
   float x, y;
   x = (col * grid_width) + MARGIN;
   y = (row * grid_height) + MARGIN;
@@ -56,7 +62,8 @@ void contourTop(int row, int col) {
   glVertex2f(x + (grid_width), y);
 }
 
-void contourRight(int row, int col) {
+void contourRight(int row, int col)
+{
   float x, y;
   x = ((col + 1) * grid_width) + MARGIN;
   y = (row * grid_height) + MARGIN;
@@ -64,7 +71,8 @@ void contourRight(int row, int col) {
   glVertex2f(x, y + (grid_height));
 }
 
-void contourLeft(int row, int col) {
+void contourLeft(int row, int col)
+{
   float x, y;
   x = (col * grid_width) + MARGIN;
   y = (row * grid_height) + MARGIN;
@@ -72,7 +80,8 @@ void contourLeft(int row, int col) {
   glVertex2f(x, y + (grid_height));
 }
 
-void display() {
+void display()
+{
   int i, j;
   float x, y, hsv[3], rgb[3];
   long offset, offset2;
@@ -92,7 +101,7 @@ void display() {
         glColor3f(1.0, 1.0, 1.0);
       }
       else {
-        hsv[0] = ((240.0 / (BUCKET_COUNT - 1)) * ((BUCKET_COUNT - 1) - set->data[offset]));
+        hsv[0] = ((240.0 / (set->buckets - 1)) * ((set->buckets - 1) - set->data[offset]));
         HSVtoRGB(hsv, rgb);
         glColor3f(rgb[0], rgb[1], rgb[2]);
       }
@@ -159,9 +168,9 @@ void display() {
 
   // Draw the key background
   glBegin(GL_QUADS);
-  bucket_height = (((float) (VIEW_HEIGHT - (2 * KEY_OUTLINE_WIDTH))) / BUCKET_COUNT);
-  for (i = 0; i < BUCKET_COUNT; i++) {
-    hsv[0] = ((240.0 / (BUCKET_COUNT - 1)) * i);
+  bucket_height = (((float) (VIEW_HEIGHT - (2 * KEY_OUTLINE_WIDTH))) / set->buckets);
+  for (i = 0; i < set->buckets; i++) {
+    hsv[0] = ((240.0 / (set->buckets - 1)) * i);
     HSVtoRGB(hsv, rgb);
     glColor3f(rgb[0], rgb[1], rgb[2]);
     glVertex2f(VIEW_WIDTH + 2 * MARGIN + KEY_OUTLINE_WIDTH, MARGIN + KEY_OUTLINE_WIDTH + i * bucket_height);
@@ -201,7 +210,8 @@ void display() {
   glFlush();
 }
 
-void initGL() {
+void initGL()
+{
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -217,7 +227,8 @@ void initGL() {
 // If you want it differently (in a 2 * pi scale, 256 instead of 1, etc,
 // you'll have to change it yourself.
 // rgb is returned in 0-1 scale (ready for color3f)
-void HSVtoRGB(float hsv[3], float rgb[3]) {
+void HSVtoRGB(float hsv[3], float rgb[3])
+{
   float f = (hsv[0] / 60.0f - (int) (hsv[0] / 60.0f));
   float tmp1 = hsv[2] * (1 - hsv[1]);
   float tmp2 = hsv[2] * (1 - hsv[1] * f);
@@ -254,18 +265,47 @@ void HSVtoRGB(float hsv[3], float rgb[3]) {
       rgb[2] = tmp2;
       break;
     default:
-      printf("What!? Inconceivable! (%d)\n", (int)(hsv[0] / 60));
+      printf("HSVtoRGB Error: (%d)\n", (int)(hsv[0]));
   }
 
 }
 
-int main(int argc, char ** argv) {
-  if (argc != 2) {
-    printf("USAGE: %s <path_to_data_file>\n", argv[0]);
+void print_usage(char *prog) {
+  printf("USAGE: %s [%s <bucket_count>] <path_to_data_file>\n", prog, BUCKET_OPTSTR);
+}
+
+int main(int argc, char ** argv)
+{
+  long buckets;
+  char *file;
+
+  if (argc != 2 && argc != 4) {
+    print_usage(argv[0]);
     return 1;
   }
 
-  set = load_dataset(argv[1]);
+  if (argc == 4) {
+    // Verify
+    if (strcmp(BUCKET_OPTSTR, argv[1])) {
+      print_usage(argv[0]);
+      return 1;
+    }
+
+    buckets = strtol(argv[2], NULL, 10);
+    if (buckets <= 0) {
+      printf("Invalid bucket value '%s'\n", argv[2]);
+      return 1;
+    }
+
+    file = argv[3];
+  }
+
+  else {
+    buckets = 20;
+    file = argv[1];
+  }
+
+  set = load_dataset(file, buckets);
   if (set == NULL) {
     return 0;
   }
@@ -282,5 +322,7 @@ int main(int argc, char ** argv) {
 
   initGL();
   glutMainLoop();
+ 
+  free(set);
   return 0;
 }
