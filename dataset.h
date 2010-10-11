@@ -1,3 +1,12 @@
+/**
+ * dataset.h
+ *
+ * A scientific data visualization tool, created for project 1 in CS 450/550
+ * at Oregon State University, Fall 2010.
+ *
+ * Author: Russell Haering
+ */
+
 #ifndef __DATASET_H
 #define __DATASET_H
 

@@ -1,4 +1,12 @@
-// Header Files
+/**
+ * prog1.c
+ *
+ * A scientific data visualization tool, created for project 1 in CS 450/550
+ * at Oregon State University, Fall 2010.
+ *
+ * Author: Russell Haering
+ */
+
 #include "dataset.h"
 #include <stdio.h>
 
@@ -18,8 +26,11 @@
 
 #define KEY_OUTLINE_WIDTH 5
 
-
 // Function prototypes
+void contourBottom(int row, int col);
+void contourTop(int row, int col);
+void contourRight(int row, int col);
+void contourLeft(int row, int col);
 void display();
 void initGL();
 void HSVtoRGB(float [], float []);

@@ -1,3 +1,12 @@
+/**
+ * dataset.c
+ *
+ * A scientific data visualization tool, created for project 1 in CS 450/550
+ * at Oregon State University, Fall 2010.
+ *
+ * Author: Russell Haering
+ */
+
 #include "dataset.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -22,7 +31,7 @@ DATASET *load_dataset(char *filename)
   DATASET *set;
   float *data, largest, smallest;
   char *fbuf, *bptr;
-  
+
   fd = open(filename, O_RDONLY);
   if (fd < 0) {
     perror("Error opening data file");
@@ -33,7 +42,7 @@ DATASET *load_dataset(char *filename)
     perror("Error stat-ing data file");
     return NULL;
   }
-  
+
   fsize = stats.st_size;
   fbuf = mmap(0, fsize, PROT_READ, MAP_SHARED, fd, 0);
 
@@ -41,12 +50,12 @@ DATASET *load_dataset(char *filename)
     perror("Error mmap-ing file");
     return NULL;
   }
-  
+
   madvise(fbuf, fsize, MADV_SEQUENTIAL);
   set = malloc(sizeof(DATASET));
 
   if (set == NULL) {
-    perror("Error allocating space for dataset metadata");   
+    perror("Error allocating space for dataset metadata");
     munmap(fbuf, fsize);
     return NULL;
   }
@@ -83,7 +92,7 @@ DATASET *load_dataset(char *filename)
     free(set);
     return NULL;
   }
-  
+
   set->data = malloc(set->y_dim * set->x_dim * sizeof(int));
   if (set->data == NULL) {
     perror("Error allocating space for binned dataset");
@@ -113,7 +122,7 @@ DATASET *load_dataset(char *filename)
       largest = data[i];
     }
   }
-  
+
   munmap(fbuf, fsize);
 
   for (i = 0; i < set->y_dim; i++) {
