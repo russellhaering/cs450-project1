@@ -18,7 +18,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-long get_offset(DATASET *set, int row, int col) {
+long get_offset(DATASET *set, int row, int col)
+{
   return ((set->x_dim * row) + col);
 }
 
