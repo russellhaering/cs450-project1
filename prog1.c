@@ -42,7 +42,6 @@ void HSVtoRGB(float [], float []);
 // global variables
 DATASET *set;
 float grid_width, grid_height;
-int contours, edges;
 
 // Function Bodies
 void contourBottom(int row, int col)
@@ -83,8 +82,7 @@ void contourLeft(int row, int col)
 
 void display()
 {
-  int i, j, val, val2;
-  int contour, edge;
+  int i, j;
   float x, y, hsv[3], rgb[3];
   long offset, offset2;
   float bucket_height;
@@ -127,11 +125,10 @@ void display()
   for (i = 0; i < set->y_dim; i++) {
     for (j = 0; j < set->x_dim; j++) {
       offset = get_offset(set, i, j);
-      val = set->data[offset];
 
       // Draw horizontal contours
       if (i == 0) {
-        if (edges && set->data[offset] != NO_DATA) {
+        if (set->data[offset] != NO_DATA) {
           contourTop(i, j);
         }
       }
@@ -142,11 +139,7 @@ void display()
       }
       else {
         offset2 = get_offset(set, i + 1, j);
-        val2 = set->data[offset2];
-
-        edge = (val == NO_DATA || val2 == NO_DATA) && (val != val2);
-        contour = edge || (val != val2);
-        if ((edge && edges) || (contour && contours)) {
+        if (set->data[offset] != set->data[offset2]) {
           contourBottom(i, j);
         }
       }
@@ -164,11 +157,7 @@ void display()
       }
       else {
         offset2 = get_offset(set, i, j + 1);
-        val2 = set->data[offset2];
-
-        edge = (val == NO_DATA || val2 == NO_DATA) && (val != val2);
-        contour = edge || (val != val2);
-        if ((edge && edges) || (contour && contours)) {
+        if (set->data[offset] != set->data[offset2]) {
           contourRight(i, j);
         }
       }
@@ -315,14 +304,6 @@ int main(int argc, char ** argv)
     buckets = 20;
     file = argv[1];
   }
-
-  if (buckets < 200) {
-    contours = 1;
-  }
-  else {
-    contours = 0;
-  }
-  edges = 1;
 
   set = load_dataset(file, buckets);
   if (set == NULL) {
